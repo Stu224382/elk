@@ -53,13 +53,10 @@ public class KnotLayoutProvider extends AbstractLayoutProvider {
     private double curveHeight = 50;
     /** Factor on how near the helping bend points are positioned for spline visualization. Influences the curve width. */
     private double curveWidthFactor = 0.2;
-    /** Enable if the algorithm is allowed to change the bend point distance around nodes. */
-    private boolean enableFlexibleNodeRadius = false;
     
     /** Maximum number of iterations of each stress reducing process. */
     private int iterationLimit = 200;
     /** Epsilon for terminating the stress minimizing process. */
-    //TODO: Try implementing stress depending termination criterion.
     private double epsilon;
 
     
@@ -110,8 +107,8 @@ public class KnotLayoutProvider extends AbstractLayoutProvider {
         this.curveHeight = layoutGraph.getProperty(KnotOptions.CURVE_HEIGHT);
         this.curveWidthFactor = layoutGraph.getProperty(KnotOptions.CURVE_WIDTH_FACTOR);
         this.iterationLimit = layoutGraph.getProperty(KnotOptions.ITERATION_LIMIT);
+        this. epsilon = layoutGraph.getProperty(KnotOptions.EPSILON);
         
-        epsilon = 10e-4;
         
         // -------- Use stress layout as initial layout. (reused section) --------
         // transform the input graph
@@ -205,17 +202,12 @@ public class KnotLayoutProvider extends AbstractLayoutProvider {
             }
             progressMonitor.logGraph(layoutGraph, "Additional middle bend points");
         }
-        
-        if(enableFlexibleNodeRadius) {      
-            // TODO: Larger curves by growing nodeRadius until angles hitting a critical range.
-            // Individual for each node.
-        }
-        
-        progressMonitor.done(); /**/
+           
+        progressMonitor.done();
     }
     
     
-    // TODO: Adjust the image size to the new coordinates.
+    // TODO: Change the overall graph position so there are no negative coordinates
     
     
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -448,6 +440,7 @@ public class KnotLayoutProvider extends AbstractLayoutProvider {
         int count = 0;
         double angle = 0;
         double prevStress = Double.MAX_VALUE;
+        double afterStress = 0;
         
         do {    
             // ROTATION:
@@ -490,9 +483,11 @@ public class KnotLayoutProvider extends AbstractLayoutProvider {
                     rotateIncomingAxis(node, - 2*angle);
                 }
             }
-    
             count++;   
-        } while(count < iterationLimit && epsilon < 2);
+            
+            // Terminate loop if the stress reduction is to insignificant.
+            afterStress = computeInAxisStress(node);
+        } while(count < iterationLimit && (prevStress - afterStress) > epsilon);
     }
     
     
@@ -507,6 +502,7 @@ public class KnotLayoutProvider extends AbstractLayoutProvider {
     
         int count = 0;
         double prevStress = Double.MAX_VALUE;
+        double afterStress = 0;
         
         do { 
             // MOVEMENT on x-Axis:
@@ -532,9 +528,11 @@ public class KnotLayoutProvider extends AbstractLayoutProvider {
             if (prevStress < (computeAngleStress(node) + computeDistanceStress(graph, node))) {
                 moveNode(node, node.getX(), node.getY() - 2*shiftValue);
             }
-            
             count++;   
-        } while(count < iterationLimit); 
+            
+            // Terminate loop if the stress reduction is to insignificant.
+            afterStress = computeInAxisStress(node);
+        } while(count < iterationLimit && (prevStress - afterStress) > epsilon);
     }
     
     

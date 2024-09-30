@@ -107,7 +107,7 @@ public class KnotLayoutProvider extends AbstractLayoutProvider {
         this.curveHeight = layoutGraph.getProperty(KnotOptions.CURVE_HEIGHT);
         this.curveWidthFactor = layoutGraph.getProperty(KnotOptions.CURVE_WIDTH_FACTOR);
         this.iterationLimit = layoutGraph.getProperty(KnotOptions.ITERATION_LIMIT);
-        this. epsilon = layoutGraph.getProperty(KnotOptions.EPSILON);
+        this.epsilon = layoutGraph.getProperty(KnotOptions.EPSILON);
         
         
         // -------- Use stress layout as initial layout. (reused section) --------
